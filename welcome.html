@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to AI Chat Collector</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #faf9f7;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 24px 40px;
+      background: linear-gradient(180deg, #fef3ee 0%, #faf9f7 100%);
+    }
+
+    .hero-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: #666;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .platforms {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 16px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .platforms span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    .section {
+      margin-top: 40px;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #c96442;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      background: #c96442;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .step-content h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .step-content p {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .feature {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #eee;
+    }
+
+    .feature-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .feature h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: #777;
+    }
+
+    .cta {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .cta-links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      background: #c96442;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .cta-btn:hover {
+      background: #b5573a;
+    }
+
+    .cta-btn.secondary {
+      background: #e8e8e8;
+      color: #333;
+    }
+
+    .cta-btn.secondary:hover {
+      background: #ddd;
+    }
+
+    .cta-hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #999;
+    }
+
+    .pain-points {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pain {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #eee;
+    }
+
+    .pain-emoji {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .pain p {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .pain strong {
+      color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-icon">&#127922;</div>
+    <h1>AI Chat Collector</h1>
+    <p>Your AI conversations, organized. Never lose a chat again.</p>
+    <div class="platforms">
+      <span>&#127760; Claude</span>
+      <span>&#127760; ChatGPT</span>
+      <span>&#127760; Grok</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="section">
+      <h2>Sound familiar?</h2>
+      <div class="pain-points">
+        <div class="pain">
+          <span class="pain-emoji">&#128269;</span>
+          <p><strong>"Where's that chat from last week?"</strong> — You had a great conversation about marketing strategy, but the sidebar buries older chats.</p>
+        </div>
+        <div class="pain">
+          <span class="pain-emoji">&#128200;</span>
+          <p><strong>"I have 200+ chats and no idea which are useful"</strong> — Most are one-off questions, some are gold. No way to tell without opening each one.</p>
+        </div>
+        <div class="pain">
+          <span class="pain-emoji">&#128257;</span>
+          <p><strong>"I keep having the same conversations"</strong> — Because you forgot you already had one about the same topic a month ago.</p>
+        </div>
+        <div class="pain">
+          <span class="pain-emoji">&#128256;</span>
+          <p><strong>"I use Claude AND ChatGPT AND Grok"</strong> — Good luck remembering which platform had that conversation about your project.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>What this extension does</h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">&#128190;</div>
+          <h3>Auto-collect</h3>
+          <p>Every chat you open on Claude, ChatGPT, or Grok is saved automatically. URL, title, timestamp.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#127991;</div>
+          <h3>Smart tags</h3>
+          <p>Auto-groups similar chats. "facilitation", "facilitate" become one tag.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#127922;</div>
+          <h3>Random chat</h3>
+          <p>One click opens a random old chat. Review it, keep it or clean it up.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128465;</div>
+          <h3>Auto-cleanup</h3>
+          <p>Deleted chats are detected and removed from your collection automatically.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">1</span>
+          <div class="step-content">
+            <h3>Just use your AI tools as usual</h3>
+            <p>The extension silently saves every chat you open on Claude, ChatGPT, and Grok. No buttons to press, no workflow changes.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-number">2</span>
+          <div class="step-content">
+            <h3>Click the extension icon</h3>
+            <p>See your chat count by platform, top tags, and the "Random Chat" button. Or click "Manage all chats" for the full view.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-number">3</span>
+          <div class="step-content">
+            <h3>Explore, filter, clean up</h3>
+            <p>Filter by platform. Use tags to find related chats. Open random ones to review. Delete what you no longer need.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta">
+      <div class="cta-links">
+        <a href="https://claude.ai" class="cta-btn">Claude.ai &#8594;</a>
+        <a href="https://chatgpt.com" class="cta-btn secondary">ChatGPT &#8594;</a>
+        <a href="https://grok.com" class="cta-btn secondary">Grok &#8594;</a>
+      </div>
+      <p class="cta-hint">Start a conversation — we'll take it from here.</p>
+    </div>
+
+  </div>
+</body>
+</html>

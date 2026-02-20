@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Collector</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-left">
+        <h1>AI Chat Collector</h1>
+        <span id="count" class="badge">0</span>
+      </div>
+      <div class="header-actions">
+        <button id="randomBtn" class="btn btn-primary">
+          <span class="dice">&#127922;</span> Random Chat
+        </button>
+      </div>
+    </header>
+
+    <div class="stats" id="stats"></div>
+
+    <div id="platformFilter" class="platform-filter"></div>
+
+    <div class="search-sort-row">
+      <div class="search-bar">
+        <input type="text" id="search" placeholder="Search chats by title or tag..." autocomplete="off">
+      </div>
+      <div class="sort-bar">
+        <select id="sortSelect">
+          <option value="lastSeen">Last opened</option>
+          <option value="savedAt">Date saved</option>
+          <option value="openCount">Most opened</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="tagBar" class="tag-bar"></div>
+
+    <div id="chatList" class="chat-list"></div>
+    <div id="emptyState" class="empty-state" style="display: none;">
+      No chats saved yet. Open a chat on Claude, ChatGPT, or Grok to start collecting.
+    </div>
+    <div id="noResults" class="empty-state" style="display: none;">
+      No chats match your search.
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

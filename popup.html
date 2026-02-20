@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+    }
+    .popup-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 12px;
+    }
+    .popup-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      background: white;
+      font-size: 11px;
+      color: #555;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .popup-tag:hover {
+      border-color: #c96442;
+      color: #c96442;
+    }
+    .popup-tag .ptag-count {
+      font-size: 9px;
+      opacity: 0.6;
+    }
+    .popup-section-label {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .popup-platforms {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #888;
+    }
+    .popup-platform {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-header">
+    <h1>AI Chats</h1>
+    <span id="count" class="badge">0</span>
+  </div>
+
+  <div id="platformStats" class="popup-platforms"></div>
+
+  <button id="randomBtn" class="btn btn-primary btn-full">
+    <span class="dice">&#127922;</span> Open Random Chat
+  </button>
+
+  <div id="emptyState" class="empty-state" style="display: none;">
+    No chats saved yet. Open a chat on Claude, ChatGPT, or Grok to start collecting.
+  </div>
+
+  <div id="tagsSection" style="display: none;">
+    <div class="popup-section-label">Top tags</div>
+    <div id="popupTags" class="popup-tags"></div>
+  </div>
+
+  <a id="manageLink" href="#" class="manage-link">Manage all chats</a>
+
+  <script src="popup.js"></script>
+</body>
+</html>
