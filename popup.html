@@ -44,6 +44,40 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .popup-recent {
+      margin-top: 8px;
+    }
+    .popup-recent-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .popup-recent-item:last-child {
+      border-bottom: none;
+    }
+    .popup-recent-icon {
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .popup-recent-link {
+      font-size: 12px;
+      color: #333;
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+    .popup-recent-link:hover {
+      color: #c96442;
+    }
+    .popup-recent-time {
+      font-size: 10px;
+      color: #bbb;
+      flex-shrink: 0;
+    }
     .popup-platforms {
       display: flex;
       gap: 8px;
@@ -64,8 +98,6 @@
     <span id="count" class="badge">0</span>
   </div>
 
-  <div id="platformStats" class="popup-platforms"></div>
-
   <button id="randomBtn" class="btn btn-primary btn-full">
     <span class="dice">&#127922;</span> Open Random Chat
   </button>
@@ -74,12 +106,21 @@
     No chats saved yet. Open a chat on Claude, ChatGPT, or Grok to start collecting.
   </div>
 
+  <div id="recentSection" style="display: none;">
+    <div class="popup-section-label">Recent</div>
+    <div id="recentChats" class="popup-recent"></div>
+  </div>
+
   <div id="tagsSection" style="display: none;">
     <div class="popup-section-label">Top tags</div>
     <div id="popupTags" class="popup-tags"></div>
   </div>
 
-  <a id="manageLink" href="#" class="manage-link">Manage all chats</a>
+  <div style="display:flex; justify-content:center; gap:12px; margin-top:12px;">
+    <a id="manageLink" href="#" class="manage-link" style="margin:0">Manage chats</a>
+    <span style="color:#ddd">·</span>
+    <a id="analyticsLink" href="#" class="manage-link" style="margin:0">Analytics</a>
+  </div>
 
   <script src="popup.js"></script>
 </body>

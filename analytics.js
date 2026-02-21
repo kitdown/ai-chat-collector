@@ -29,29 +29,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const chats = await chrome.runtime.sendMessage({ type: 'GET_CHATS' }) || {};
+  const activityLog = await chrome.runtime.sendMessage({ type: 'GET_ACTIVITY_LOG' }) || [];
   const chatList = Object.values(chats);
   const chatEntries = Object.entries(chats);
 
-  if (chatList.length === 0) {
+  if (chatList.length === 0 && activityLog.length === 0) {
     document.getElementById('content').style.display = 'none';
     document.getElementById('emptyState').style.display = 'block';
     return;
   }
 
-  renderSummaryCards(chatList);
-  renderDailyChart(chatList);
-  renderMonthlyChart(chatList);
-  renderPlatformBars(chatList);
-  renderWeekdayChart(chatList);
+  renderSummaryCards(chatList, activityLog);
+  renderDailyChart(chatList, activityLog);
+  renderMonthlyChart(chatList, activityLog);
+  renderPlatformBars(chatList, activityLog);
+  renderWeekdayChart(chatList, activityLog);
   renderTopChats(chatEntries);
 });
 
 // --- Summary Cards ---
 
-function renderSummaryCards(chats) {
+function renderSummaryCards(chats, activityLog) {
   const container = document.getElementById('summaryCards');
   const totalChats = chats.length;
-  const totalOpens = chats.reduce((sum, c) => sum + (c.openCount || 1), 0);
+  // Use activityLog for total opens if available, otherwise fall back to openCount sum
+  const totalOpens = activityLog.length > 0
+    ? activityLog.length
+    : chats.reduce((sum, c) => sum + (c.openCount || 1), 0);
   const avgOpens = totalChats > 0 ? (totalOpens / totalChats).toFixed(1) : 0;
 
   let topChat = null;
@@ -68,6 +72,10 @@ function renderSummaryCards(chats) {
   for (const c of chats) {
     const d = new Date(c.savedAt);
     if (!firstDate || d < firstDate) firstDate = d;
+  }
+  if (activityLog.length > 0) {
+    const logFirst = new Date(activityLog[0].ts);
+    if (!firstDate || logFirst < firstDate) firstDate = logFirst;
   }
   const daysTracking = firstDate ? Math.max(1, Math.floor((new Date() - firstDate) / 86400000)) : 0;
   const chatsPerDay = daysTracking > 0 ? (totalChats / daysTracking).toFixed(1) : 0;
@@ -97,7 +105,7 @@ function renderSummaryCards(chats) {
 
 // --- Daily Chart (last 30 days) ---
 
-function renderDailyChart(chats) {
+function renderDailyChart(chats, activityLog) {
   const canvas = document.getElementById('dailyChart');
   const days = 30;
   const now = new Date();
@@ -108,25 +116,37 @@ function renderDailyChart(chats) {
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    const key = dateKey(date);
     labels.push(i === 0 ? 'Today' : i === 1 ? 'Yday' : `${date.getDate()}/${date.getMonth() + 1}`);
     newChats.push(0);
     opens.push(0);
   }
 
+  // New chats by savedAt
   for (const chat of chats) {
-    // Count new chats by savedAt
     const savedDate = new Date(chat.savedAt);
     const savedIdx = dayIndex(savedDate, now, days);
     if (savedIdx >= 0 && savedIdx < days) {
       newChats[savedIdx]++;
     }
+  }
 
-    // Count opens by lastSeen (rough — we only have last seen, not all opens)
-    const seenDate = new Date(chat.lastSeen);
-    const seenIdx = dayIndex(seenDate, now, days);
-    if (seenIdx >= 0 && seenIdx < days) {
-      opens[seenIdx]++;
+  // Opens from activity log (accurate, includes deleted chats)
+  if (activityLog.length > 0) {
+    for (const entry of activityLog) {
+      const d = new Date(entry.ts);
+      const idx = dayIndex(d, now, days);
+      if (idx >= 0 && idx < days) {
+        opens[idx]++;
+      }
+    }
+  } else {
+    // Fallback: use lastSeen from chats
+    for (const chat of chats) {
+      const seenDate = new Date(chat.lastSeen);
+      const seenIdx = dayIndex(seenDate, now, days);
+      if (seenIdx >= 0 && seenIdx < days) {
+        opens[seenIdx]++;
+      }
     }
   }
 
@@ -147,7 +167,7 @@ function dateKey(date) {
 
 // --- Monthly Chart ---
 
-function renderMonthlyChart(chats) {
+function renderMonthlyChart(chats, activityLog) {
   const canvas = document.getElementById('monthlyChart');
 
   // Get range of months
@@ -187,7 +207,7 @@ function renderMonthlyChart(chats) {
 
 // --- Platform Bars ---
 
-function renderPlatformBars(chats) {
+function renderPlatformBars(chats, activityLog) {
   const container = document.getElementById('platformBars');
   const counts = {};
   for (const c of chats) {
@@ -217,22 +237,31 @@ function renderPlatformBars(chats) {
 
 // --- Weekday Chart ---
 
-function renderWeekdayChart(chats) {
+function renderWeekdayChart(chats, activityLog) {
   const canvas = document.getElementById('weekdayChart');
   const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon-Sun
 
-  for (const chat of chats) {
-    // Use savedAt for day-of-week distribution
-    const d = new Date(chat.savedAt);
-    let dow = d.getDay(); // 0=Sun, 1=Mon...
-    dow = dow === 0 ? 6 : dow - 1; // Convert to 0=Mon, 6=Sun
-    counts[dow]++;
+  if (activityLog.length > 0) {
+    // Use activity log for accurate day-of-week stats
+    for (const entry of activityLog) {
+      const d = new Date(entry.ts);
+      let dow = d.getDay();
+      dow = dow === 0 ? 6 : dow - 1;
+      counts[dow]++;
+    }
+  } else {
+    // Fallback: use savedAt + lastSeen
+    for (const chat of chats) {
+      const d = new Date(chat.savedAt);
+      let dow = d.getDay();
+      dow = dow === 0 ? 6 : dow - 1;
+      counts[dow]++;
 
-    // Also count lastSeen if different day
-    const ls = new Date(chat.lastSeen);
-    let lsDow = ls.getDay();
-    lsDow = lsDow === 0 ? 6 : lsDow - 1;
-    counts[lsDow]++;
+      const ls = new Date(chat.lastSeen);
+      let lsDow = ls.getDay();
+      lsDow = lsDow === 0 ? 6 : lsDow - 1;
+      counts[lsDow]++;
+    }
   }
 
   drawBarChart(canvas, DAY_NAMES, [

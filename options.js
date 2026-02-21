@@ -62,8 +62,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderChats();
   });
 
-  document.getElementById('randomBtn').addEventListener('click', async () => {
-    await chrome.runtime.sendMessage({ type: 'OPEN_RANDOM_CHAT', platform: activePlatformFilter });
+  document.getElementById('randomBtn').addEventListener('click', async (e) => {
+    const bg = e.ctrlKey || e.metaKey;
+    await chrome.runtime.sendMessage({ type: 'OPEN_RANDOM_CHAT', platform: activePlatformFilter, background: bg });
   });
 
   document.getElementById('analyticsBtn').addEventListener('click', () => {
@@ -368,14 +369,21 @@ function renderChats() {
 
   noResults.style.display = 'none';
 
-  // Sort
-  if (activeSort === 'openCount') {
-    filtered.sort(([, a], [, b]) => (b.openCount || 0) - (a.openCount || 0));
-  } else if (activeSort === 'savedAt') {
-    filtered.sort(([, a], [, b]) => new Date(b.savedAt) - new Date(a.savedAt));
-  } else {
-    filtered.sort(([, a], [, b]) => new Date(b.lastSeen) - new Date(a.lastSeen));
-  }
+  // Sort: pinned always first, then by selected sort
+  const sortFn = (activeSort === 'openCount')
+    ? ([, a], [, b]) => (b.openCount || 0) - (a.openCount || 0)
+    : (activeSort === 'savedAt')
+      ? ([, a], [, b]) => new Date(b.savedAt) - new Date(a.savedAt)
+      : ([, a], [, b]) => new Date(b.lastSeen) - new Date(a.lastSeen);
+
+  filtered.sort((a, b) => {
+    const pinA = a[1].pinned ? 1 : 0;
+    const pinB = b[1].pinned ? 1 : 0;
+    if (pinA !== pinB) return pinB - pinA; // pinned first
+    return sortFn(a, b);
+  });
+
+  const duplicates = findDuplicates(filtered);
 
   chatList.innerHTML = filtered.map(([id, chat]) => {
     const autoTags = getAutoTagsForChat(id);
@@ -383,6 +391,7 @@ function renderChats() {
     const allChatTags = [...autoTags, ...manualTags];
     const platformIcon = PLATFORM_ICONS[chat.platform] || '';
     const platformName = PLATFORM_NAMES[chat.platform] || chat.platform || '';
+    const dupeCount = duplicates.has(id) ? duplicates.get(id).length : 0;
 
     const tagsHtml = allChatTags.length > 0
       ? `<div class="chat-tags">
@@ -396,19 +405,32 @@ function renderChats() {
         </div>`
       : `<div class="chat-tags"><button class="tag-add-btn" data-chat="${id}" title="Add tag">+</button></div>`;
 
+    const isPinned = chat.pinned;
+
     return `
-    <div class="chat-item" data-id="${id}">
+    <div class="chat-item ${isPinned ? 'chat-pinned' : ''}" data-id="${id}">
+      <button class="pin-btn ${isPinned ? 'pinned' : ''}" data-id="${id}" title="${isPinned ? 'Unpin' : 'Pin to top'}">&#9733;</button>
       <div class="chat-info">
         <div class="chat-title-row">
           <span class="platform-icon" title="${platformName}">${platformIcon}</span>
           <a href="${escapeHtml(chat.url)}" target="_blank" class="chat-title">${escapeHtml(chat.title)}</a>
         </div>
-        <span class="chat-meta">Saved ${timeAgo(new Date(chat.savedAt))} · Last seen ${timeAgo(new Date(chat.lastSeen))}${chat.openCount > 1 ? ` · Opened ${chat.openCount}x` : ''}</span>
+        <span class="chat-meta">Saved ${timeAgo(new Date(chat.savedAt))} · Last seen ${timeAgo(new Date(chat.lastSeen))}${chat.openCount > 1 ? ` · Opened ${chat.openCount}x` : ''}${dupeCount > 0 ? ` · <span class="dupe-badge" title="${dupeCount} similar chat${dupeCount > 1 ? 's' : ''}">~${dupeCount} similar</span>` : ''}</span>
         ${tagsHtml}
       </div>
       <button class="btn btn-danger btn-small remove-btn" data-id="${id}" title="Remove from collection">&times;</button>
     </div>`;
   }).join('');
+
+  // Attach pin handlers
+  chatList.querySelectorAll('.pin-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const chatId = e.target.dataset.id;
+      await chrome.runtime.sendMessage({ type: 'TOGGLE_PIN', id: chatId });
+      await loadChats();
+    });
+  });
 
   // Attach remove chat handlers
   chatList.querySelectorAll('.remove-btn').forEach(btn => {
@@ -438,6 +460,39 @@ function renderChats() {
       showAddTagInput(e.target, chatId);
     });
   });
+}
+
+// --- Duplicate detection ---
+
+function findDuplicates(entries) {
+  // Returns Map<chatId, [similar chatId, ...]>
+  const dupes = new Map();
+  const titles = entries.map(([id, chat]) => ({
+    id,
+    words: new Set(tokenize(chat.title).filter(w => w.length >= 3 && !STOP_WORDS.has(w)))
+  }));
+
+  for (let i = 0; i < titles.length; i++) {
+    for (let j = i + 1; j < titles.length; j++) {
+      const a = titles[i];
+      const b = titles[j];
+      if (a.words.size === 0 || b.words.size === 0) continue;
+      // Jaccard similarity
+      let intersection = 0;
+      for (const w of a.words) {
+        if (b.words.has(w)) intersection++;
+      }
+      const union = new Set([...a.words, ...b.words]).size;
+      const similarity = intersection / union;
+      if (similarity >= 0.5) {
+        if (!dupes.has(a.id)) dupes.set(a.id, []);
+        if (!dupes.has(b.id)) dupes.set(b.id, []);
+        dupes.get(a.id).push(b.id);
+        dupes.get(b.id).push(a.id);
+      }
+    }
+  }
+  return dupes;
 }
 
 // --- Add tag inline input ---

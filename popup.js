@@ -96,7 +96,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const manageLink = document.getElementById('manageLink');
   const tagsSection = document.getElementById('tagsSection');
   const popupTags = document.getElementById('popupTags');
-  const platformStats = document.getElementById('platformStats');
 
   const chats = await chrome.runtime.sendMessage({ type: 'GET_CHATS' }) || {};
   const chatCount = Object.keys(chats).length;
@@ -106,16 +105,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     randomBtn.disabled = true;
     emptyState.style.display = 'block';
   } else {
-    // Show platform breakdown
-    const pCounts = getPlatformCounts(chats);
-    const platformHtml = Object.entries(pCounts)
-      .sort(([, a], [, b]) => b - a)
-      .map(([platform, count]) => {
-        const icon = PLATFORM_ICONS[platform] || '\u2753';
-        const name = platform.charAt(0).toUpperCase() + platform.slice(1);
-        return `<span class="popup-platform">${icon} ${name}: ${count}</span>`;
+    // Show 10 recent chats
+    const recentSection = document.getElementById('recentSection');
+    const recentChats = document.getElementById('recentChats');
+    const sorted = Object.values(chats)
+      .sort((a, b) => new Date(b.lastSeen) - new Date(a.lastSeen))
+      .slice(0, 10);
+
+    if (sorted.length > 0) {
+      recentSection.style.display = 'block';
+      recentChats.innerHTML = sorted.map(chat => {
+        const icon = PLATFORM_ICONS[chat.platform] || '';
+        return `<div class="popup-recent-item">
+          <span class="popup-recent-icon">${icon}</span>
+          <a href="${chat.url}" target="_blank" class="popup-recent-link">${escapeHtml(chat.title)}</a>
+          <span class="popup-recent-time">${timeAgo(new Date(chat.lastSeen))}</span>
+        </div>`;
       }).join('');
-    platformStats.innerHTML = platformHtml;
+    }
 
     // Build and show tags
     const topTags = buildTopTags(chats);
@@ -140,9 +147,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  randomBtn.addEventListener('click', async () => {
-    const result = await chrome.runtime.sendMessage({ type: 'OPEN_RANDOM_CHAT' });
-    if (result?.ok) window.close();
+  randomBtn.addEventListener('click', async (e) => {
+    const bg = e.ctrlKey || e.metaKey;
+    const result = await chrome.runtime.sendMessage({ type: 'OPEN_RANDOM_CHAT', background: bg });
+    if (result?.ok && !bg) window.close();
   });
 
   manageLink.addEventListener('click', (e) => {
@@ -150,4 +158,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     chrome.runtime.openOptionsPage();
     window.close();
   });
+
+  document.getElementById('analyticsLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.tabs.create({ url: chrome.runtime.getURL('analytics.html') });
+    window.close();
+  });
 });
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return 'now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `${days}d`;
+}

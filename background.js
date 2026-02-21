@@ -60,6 +60,17 @@ async function saveChats(chats) {
   await chrome.storage.local.set({ chats });
 }
 
+// --- Activity log: lightweight array of {ts, platform} for analytics ---
+
+async function logOpen(platform) {
+  const data = await chrome.storage.local.get('activityLog');
+  const log = data.activityLog || [];
+  log.push({ ts: Date.now(), p: platform });
+  // Keep last 10000 entries max (~200KB) to avoid storage bloat
+  if (log.length > 10000) log.splice(0, log.length - 10000);
+  await chrome.storage.local.set({ activityLog: log });
+}
+
 async function saveChat(id, chatData) {
   const chats = await getChats();
   const existing = chats[id];
@@ -71,7 +82,16 @@ async function saveChat(id, chatData) {
     savedAt: existing?.savedAt || new Date().toISOString(),
     lastSeen: new Date().toISOString(),
     openCount: (existing?.openCount || 0) + 1,
+    pinned: existing?.pinned || false,
   };
+  await saveChats(chats);
+  logOpen(chats[id].platform);
+}
+
+async function togglePin(id) {
+  const chats = await getChats();
+  if (!chats[id]) return;
+  chats[id].pinned = !chats[id].pinned;
   await saveChats(chats);
 }
 
@@ -162,23 +182,36 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabChatMap.delete(tabId);
 });
 
-// --- Startup: clean up chats with generic titles ---
+// --- Startup: clean up and migrate ---
 
-async function cleanupGenericChats() {
+async function startupMigration() {
   const chats = await getChats();
   let changed = false;
+
   for (const [id, chat] of Object.entries(chats)) {
+    // Remove chats with generic titles
     if (isGenericTitle(chat.title)) {
       delete chats[id];
       changed = true;
+      continue;
+    }
+
+    // Fix missing platform — detect from URL
+    if (!chat.platform || chat.platform === 'unknown') {
+      const detected = detectPlatform(chat.url);
+      if (detected) {
+        chat.platform = detected;
+        changed = true;
+      }
     }
   }
+
   if (changed) {
     await saveChats(chats);
   }
 }
 
-cleanupGenericChats();
+startupMigration();
 
 // --- Onboarding: open welcome page on first install ---
 
@@ -192,15 +225,25 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'OPEN_RANDOM_CHAT') {
-    openRandomChat(message.platform).then(sendResponse);
+    openRandomChat(message.platform, message.background).then(sendResponse);
     return true;
   }
   if (message.type === 'GET_CHATS') {
     getChats().then(sendResponse);
     return true;
   }
+  if (message.type === 'GET_ACTIVITY_LOG') {
+    chrome.storage.local.get('activityLog').then(data => {
+      sendResponse(data.activityLog || []);
+    });
+    return true;
+  }
   if (message.type === 'GET_PLATFORMS') {
     sendResponse(PLATFORMS);
+    return true;
+  }
+  if (message.type === 'TOGGLE_PIN') {
+    togglePin(message.id).then(() => sendResponse({ ok: true }));
     return true;
   }
   if (message.type === 'REMOVE_CHAT') {
@@ -236,7 +279,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-async function openRandomChat(platformFilter) {
+async function openRandomChat(platformFilter, background = false) {
   const chats = await getChats();
   let ids = Object.keys(chats);
   if (platformFilter) {
@@ -246,6 +289,6 @@ async function openRandomChat(platformFilter) {
 
   const randomId = ids[Math.floor(Math.random() * ids.length)];
   const chat = chats[randomId];
-  await chrome.tabs.create({ url: chat.url });
+  await chrome.tabs.create({ url: chat.url, active: !background });
   return { ok: true, chat };
 }
