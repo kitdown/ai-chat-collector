@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('randomBtn').addEventListener('click', async () => {
     await chrome.runtime.sendMessage({ type: 'OPEN_RANDOM_CHAT', platform: activePlatformFilter });
   });
+
+  document.getElementById('analyticsBtn').addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('analytics.html') });
+  });
 });
 
 async function loadChats() {

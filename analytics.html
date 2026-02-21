@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Collector — Analytics</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { background: #faf9f7; }
+
+    .analytics-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    .analytics-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .analytics-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .back-link {
+      color: #c96442;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link:hover { text-decoration: underline; }
+
+    /* Summary cards */
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #eee;
+      text-align: center;
+    }
+
+    .summary-card .card-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #c96442;
+      line-height: 1.2;
+    }
+
+    .summary-card .card-label {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card .card-sub {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Chart sections */
+    .chart-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #eee;
+      margin-bottom: 20px;
+    }
+
+    .chart-section h2 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 200px;
+    }
+
+    /* Platform bars */
+    .platform-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .platform-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .platform-label {
+      width: 90px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .platform-bar-bg {
+      flex: 1;
+      height: 24px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .platform-bar-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+
+    .platform-bar-text {
+      font-size: 12px;
+      color: #666;
+      width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Top chats table */
+    .top-chats {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .top-chats th {
+      text-align: left;
+      font-size: 11px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 8px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .top-chats td {
+      padding: 8px;
+      font-size: 13px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .top-chats .rank {
+      color: #aaa;
+      font-size: 12px;
+      width: 30px;
+    }
+
+    .top-chats .chat-link {
+      color: #1a1a1a;
+      text-decoration: none;
+      font-weight: 500;
+      max-width: 400px;
+      display: inline-block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .top-chats .chat-link:hover { color: #c96442; }
+
+    .top-chats .opens {
+      font-weight: 600;
+      color: #c96442;
+      text-align: right;
+    }
+
+    /* Legend */
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    .empty-analytics {
+      text-align: center;
+      padding: 60px 24px;
+      color: #888;
+    }
+
+    .empty-analytics h2 {
+      margin-bottom: 8px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="analytics-container">
+    <div class="analytics-header">
+      <h1>Analytics</h1>
+      <a href="#" id="backLink" class="back-link">&larr; Back to chats</a>
+    </div>
+
+    <div id="content">
+      <div id="summaryCards" class="summary-cards"></div>
+
+      <div class="chart-section">
+        <h2>Last 30 days</h2>
+        <canvas id="dailyChart" class="chart-canvas"></canvas>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#c96442"></span> New chats</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#e8c4b4"></span> Opens</span>
+        </div>
+      </div>
+
+      <div class="chart-section">
+        <h2>Monthly growth</h2>
+        <canvas id="monthlyChart" class="chart-canvas"></canvas>
+      </div>
+
+      <div class="chart-section">
+        <h2>Platforms</h2>
+        <div id="platformBars" class="platform-bars"></div>
+      </div>
+
+      <div class="chart-section">
+        <h2>Day of week</h2>
+        <canvas id="weekdayChart" class="chart-canvas"></canvas>
+      </div>
+
+      <div class="chart-section">
+        <h2>Top 10 most opened</h2>
+        <table id="topChats" class="top-chats"></table>
+      </div>
+    </div>
+
+    <div id="emptyState" class="empty-analytics" style="display:none;">
+      <h2>No data yet</h2>
+      <p>Start using Claude, ChatGPT, or Grok — your analytics will appear here.</p>
+    </div>
+  </div>
+
+  <script src="analytics.js"></script>
+</body>
+</html>
